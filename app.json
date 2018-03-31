@@ -1,0 +1,22 @@
+{
+  "name": "codenamesbot",
+  "description": "extract word2vec tar",
+  "scripts": {
+    "postdeploy": "tar xvzf GoogleNews-vectors-negative300-top100000.tar.gz -C ./app"
+  },
+  "env": {
+  },
+  "formation": {
+    "web": {
+      "quantity": 1
+    }
+  },
+  "addons": [
+
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ]
+}
