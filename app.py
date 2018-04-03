@@ -1,4 +1,5 @@
 from itertools import combinations
+from collections import deque
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -37,7 +38,7 @@ LIMIT = 30
 # instructions: export FLASK_APP=server.py
 # flask run
 
-hints_used = set()
+hints_used = deque()
 
 
 def bestMatchPair(words):
@@ -108,9 +109,9 @@ def bestMatch(words_own, words_other, words_gray, words_black, allWords):
     targets = [s[1] for s in scores[0][2]]
     #print(targets)
 
-    if len(hints_used) > 10:
-        hints_used = set()
-    hints_used.add(best)
+    hints_used.append(best)
+    if len(hints_used) > 20:
+        hints_used.popleft()
 
     return best, targets, {t: model.wv.similarity(best, t) for t in targets}, \
            [model.wv.similarity(best, w) for w in allWords]
