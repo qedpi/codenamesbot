@@ -22,11 +22,11 @@ LIMIT = 30
 hints_used = deque()
 
 
-def bestMatchPair(words):
+def best_match_pair(words):
     return set(pair[0] for pair in model.most_similar(positive=words, topn=LIMIT))
 
 
-def bestMatch(words_own, words_other, words_gray, words_black, allWords):
+def best_match(words_own, words_other, words_gray, words_black, allWords):
     global hints_used
 
     print(f'\n finding hints for: {words_own}')
@@ -36,7 +36,7 @@ def bestMatch(words_own, words_other, words_gray, words_black, allWords):
     for size in range(1, 4):
         for combo in combinations(words_own, size):
             # print(combo, similar_words, '\n')
-            similar_words |= bestMatchPair(combo)
+            similar_words |= best_match_pair(combo)
 
     # only take non-compound words that don't share a stem
     # todo: OUTSOURCE, add cors restrictions
@@ -48,7 +48,7 @@ def bestMatch(words_own, words_other, words_gray, words_black, allWords):
                      and w not in hints_used)
     #print(similar_words, 'after')
 
-    def getWeights(w):
+    def get_weights(w):
         if w in words_own:
             return 1
         elif w in words_gray:
@@ -65,7 +65,7 @@ def bestMatch(words_own, words_other, words_gray, words_black, allWords):
         similarity = sorted([(model.wv.similarity(hint, w), w) for w in allWords], reverse=True)
         # type: float: sim, str: word
 
-        score = sum(match[0] ** 2 * getWeights(match[1]) for match in similarity)
+        score = sum(match[0] ** 2 * get_weights(match[1]) for match in similarity)
         #scores.append((score, hint, similarity[:2]))
         return score
 
@@ -101,14 +101,14 @@ def bestMatch(words_own, words_other, words_gray, words_black, allWords):
 
 
 @app.route('/')
-def hello_world():
-    return 'Hey'
+def welcome():
+    return 'go to /api for word hints!'
 
 
 @app.route('/api/', methods=['POST'])
-def parseWords():
+def parse_words():
     words = request.get_json()
 
-    hint, targets, dist, allDists = bestMatch(words['red'], words['blue'], words['gray'], words['black'], words['allWords'])
+    hint, targets, dist, all_dists = best_match(words['red'], words['blue'], words['gray'], words['black'], words['allWords'])
 
-    return jsonify({'hint': hint, 'targets': targets, 'dist': dist, 'allDists': allDists})
+    return jsonify({'hint': hint, 'targets': targets, 'dist': dist, 'allDists': all_dists})
