@@ -103,5 +103,4 @@ ENV/
 .idea
 __pycache__
 server backup.py
-utils.py
 codenames_words.py

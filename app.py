@@ -1,33 +1,14 @@
 from itertools import combinations
 from collections import deque
 
+# Flask
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-import tarfile
-
-# http://www.nltk.org/howto/stem.html
+# NLP: http://www.nltk.org/howto/stem.html
+from utils import model
 from nltk.stem.snowball import SnowballStemmer
 stemmer = SnowballStemmer('english')
-
-# init word2vec model
-import gensim
-
-WORD_LIMIT = 100000
-
-WORD2VEC_TAR = 'GoogleNews-vectors-negative300-top100000.tar.gz'
-WORD2VEC_WEIGHTS = 'GoogleNews-vectors-negative300-top100000.bin'
-
-# extract word2vec zipped file
-tar = tarfile.open(WORD2VEC_TAR, "r:gz")
-tar.extractall()
-tar.close()
-print('finished extracting')
-
-# limit to common words
-model = gensim.models.KeyedVectors.load_word2vec_format(WORD2VEC_WEIGHTS, binary=True, limit=WORD_LIMIT)
-# can save top X most common words in bin format
-# gensim.models.KeyedVectors.save_word2vec_format(model, fname='reduced.bin', binary=True)
 
 app = Flask(__name__)
 CORS(app)
@@ -58,6 +39,7 @@ def bestMatch(words_own, words_other, words_gray, words_black, allWords):
             similar_words |= bestMatchPair(combo)
 
     # only take non-compound words that don't share a stem
+    # todo: OUTSOURCE, add cors restrictions
     similar_words = (w for w in similar_words
                      if w.isalpha()
                      and stemmer.stem(w) not in (stemmer.stem(x) for x in allWords)
@@ -78,11 +60,12 @@ def bestMatch(words_own, words_other, words_gray, words_black, allWords):
         else:
             return 0
 
+    # todo: better function names, comments, consistency
     def get_danger(hint):
         similarity = sorted([(model.wv.similarity(hint, w), w) for w in allWords], reverse=True)
         # type: float: sim, str: word
 
-        score = sum(match[0] ** 2 * getWeights(match[1]) for _, match in enumerate(similarity))
+        score = sum(match[0] ** 2 * getWeights(match[1]) for match in similarity)
         #scores.append((score, hint, similarity[:2]))
         return score
 
@@ -91,9 +74,9 @@ def bestMatch(words_own, words_other, words_gray, words_black, allWords):
     for hint in similar_words:
         similarity = sorted([(model.wv.similarity(hint, w), w) for w in allWords], reverse=True)
         #print(hint, '#', similarity)
-        total_sim = 0.00
+        total_sim = 0.0
         for i, match in enumerate(similarity):
-            #print(i, match)
+            #print(i, match) todo make constant
             if not(match[0] > .25 and match[1] in words_own):
                 scores.append((i * (1 + get_danger(hint)/2) + total_sim / (i + .0001), hint, similarity[:i]))
                 break
