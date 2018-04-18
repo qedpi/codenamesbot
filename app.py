@@ -1,5 +1,4 @@
 from itertools import combinations
-from collections import deque
 
 # Flask
 from flask import Flask, request, jsonify
@@ -19,18 +18,13 @@ LIMIT = 30
 # instructions: export FLASK_APP=server.py
 # flask run
 
-hints_used = deque()
-
-
 def best_match_pair(words):
     return set(pair[0] for pair in model.most_similar(positive=words, topn=LIMIT))
 
 
-def best_match(words_own, words_other, words_gray, words_black, allWords):
-    global hints_used
-
+def best_match(words_own, words_other, words_gray, words_black, allWords, previous_hints):
+    print(f'\n excluding previous hints: {previous_hints}')
     print(f'\n finding hints for: {words_own}')
-    print(f'\n excluding previous hints: {hints_used}')
     similar_words = set()
 
     for size in range(1, 4):
@@ -45,7 +39,7 @@ def best_match(words_own, words_other, words_gray, words_black, allWords):
                      and stemmer.stem(w) not in (stemmer.stem(x) for x in allWords)
                      and all(w not in x and x not in w for x in allWords)
                      and w.upper() != w
-                     and w not in hints_used)
+                     and w not in previous_hints)
     #print(similar_words, 'after')
 
     def get_weights(w):
@@ -92,10 +86,6 @@ def best_match(words_own, words_other, words_gray, words_black, allWords):
     targets = [s[1] for s in scores[0][2]]
     #print(targets)
 
-    hints_used.append(best)
-    if len(hints_used) > 20:
-        hints_used.popleft()
-
     return best, targets, {t: model.wv.similarity(best, t) for t in targets}, \
            [model.wv.similarity(best, w) for w in allWords]
 
@@ -109,6 +99,7 @@ def welcome():
 def parse_words():
     words = request.get_json()
 
-    hint, targets, dist, all_dists = best_match(words['red'], words['blue'], words['gray'], words['black'], words['allWords'])
+    hint, targets, dist, all_dists = best_match(words['red'], words['blue'],
+                                                words['gray'], words['black'], words['allWords'], words['previousHints'])
 
     return jsonify({'hint': hint, 'targets': targets, 'dist': dist, 'allDists': all_dists})
