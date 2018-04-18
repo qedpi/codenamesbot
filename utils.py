@@ -3,9 +3,10 @@ import tarfile
 # NLP
 import gensim
 
+WORD_LIMIT = 100000
+
 WORD2VEC_WEIGHTS = 'GoogleNews-vectors-negative300-top100000.bin'
 if WORD2VEC_WEIGHTS not in os.listdir():
-    WORD_LIMIT = 100000
     WORD2VEC_TAR = 'GoogleNews-vectors-negative300-top100000.tar.gz'
 
     # extract word2vec zipped file (circumvent github max file size)
