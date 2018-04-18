@@ -104,3 +104,5 @@ ENV/
 __pycache__
 server backup.py
 codenames_words.py
+
+GoogleNews-vectors-negative300-top100000.bin
