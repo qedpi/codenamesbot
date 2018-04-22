@@ -22,7 +22,7 @@ def best_match_pair(words):
     return set(pair[0] for pair in model.most_similar(positive=words, topn=LIMIT))
 
 
-def best_match(words_own, words_other, words_gray, words_black, allWords, previous_hints):
+def best_match(words_own, words_other, words_gray, words_black, allWords, previous_hints, q=1):
     print(f'\n excluding previous hints: {previous_hints}')
     print(f'\n finding hints for: {words_own}')
     similar_words = set()
@@ -86,8 +86,11 @@ def best_match(words_own, words_other, words_gray, words_black, allWords, previo
     targets = [s[1] for s in scores[0][2]]
     #print(targets)
 
-    return best, targets, {t: model.wv.similarity(best, t) for t in targets}, \
-           [model.wv.similarity(best, w) for w in allWords]
+    if q == 1:
+        return best, targets, {t: model.wv.similarity(best, t) for t in targets}, \
+               [model.wv.similarity(best, w) for w in allWords]
+    else:
+        return [scores[i][1] for i in range(min(q, len(scores)))]
 
 
 @app.route('/')
@@ -103,3 +106,12 @@ def parse_words():
                                                 words['gray'], words['black'], words['allWords'], words['previousHints'])
 
     return jsonify({'hint': hint, 'targets': targets, 'dist': dist, 'allDists': all_dists})
+
+
+@app.route('/api/hint', methods=['POST'])
+def parse_own_words():
+    data = request.get_json()
+    userWords = [word for word in data['words'] if word]
+    hints = best_match(userWords, [], [], [], userWords, [], q=5)
+    print('give hints: ---- ', hints)
+    return jsonify({'hints': hints})
